@@ -40,7 +40,15 @@ const game = () => {
 
     // Just to grouped the turns of player and AI, if player's turn, call turn(player) and vice versa for AI
     const turnClick = (square) => {
-        turn(square.target.id, humanPlayer);
+        // If that box is chosen, the AI can't choose it anymore
+        if (typeof oriBoard[square.target.id] == 'number') { // oriBoard is filled with numbers, then get replace with symbol after chosen by the player
+            turn(square.target.id, humanPlayer); // Player's turn
+
+            // If the player's turn doesn't trigger the tie check, then move on with AI's move
+            if (!checkTie()) {
+                turn(bestSpot(), comPlayer);
+            };
+        };
     };
 
     const turn = (squareId, player) => {
@@ -69,20 +77,51 @@ const game = () => {
         };
 
         return gameWon;
-    }
+    };
 
     const gameOver = (gameWon) => {
         // Check every index of winCombos, and if it's linked with the index of gameWon, then change color based on the winner
         for (let index of winCombos[gameWon.index]) {
             document.getElementById(index).style.backgroundColor =
                 gameWon.player == humanPlayer ? "blue" : "red";
-        }
+        };
 
         // Loop every boxes, and remove the ability to click on that
         for (var i = 0; i < cells.length; i++) {
             cells[i].removeEventListener('click', turnClick, false);
-        }
+        };
+
+        // Display winning text based on who wins
+        declareWinner(gameWon.player == humanPlayer ? "You win, congratz!" : "You lose, sorry!");
+    };
+
+    // Display the winning text
+    function declareWinner(who) {
+        document.querySelector(".endgame").style.display = "block";
+        document.querySelector(".endgame .text").textContent = who;
     }
+
+    const emptySquares = () => {
+      return oriBoard.filter(s => typeof s == 'number') // Filter the board, if the box is a number, then it's empty
+    };
+
+    const bestSpot = () => {
+        return emptySquares()[0]; // If it's empty, then pick the first empty box then choose it (by AI)
+    };
+
+    const checkTie = () => {
+        if (emptySquares().length == 0) {
+            for (var i = 0; i < cells.length; i++) {
+                cells[i].style.backgroundColor = "green";
+                cells[i].removeEventListener('click', turnClick, false);
+            };
+
+            declareWinner("It's either you both are shit, or both are damn good!");
+            return true;
+        };
+
+        return false;
+    };
 
     // Call the inner functions
     startGame();
